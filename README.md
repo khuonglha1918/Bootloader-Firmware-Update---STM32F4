@@ -34,6 +34,6 @@ Note: if using DMA, rxbuff's size must match exactly size of firmware (.BIN) to 
 https://drive.google.com/file/d/1zqdLdZCvbugISHrtnXr1EfANJB-B5JfK/view?usp=drive_link
 
 
-# Author
+## Author
 
 Khuong Le

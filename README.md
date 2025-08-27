@@ -25,6 +25,7 @@
 Perform independently one of the below bootloading methods:
 1. Bootloading by pressing button
 2. Firmware updating via DMA and UART protocols (using Hercules software)
+3. When using Gyroscope or Quake Sensor apps, remember to tilt or shake STM32F4 board accordingly
 
 Note: if using DMA, rxbuff's size must match exactly size of firmware (.BIN) to be updated onto STM32F4 board
 

@@ -1,0 +1,233 @@
+#include "main.h"
+
+#define I2C1_BASE 0x40005400
+#define I2C_CR1 0x00
+#define I2C_CR2 0x04
+#define I2C_CCR 0x1C
+#define I2C_SR1 0x14
+#define I2C_SR2 0x18
+#define I2C_DR 0x10
+
+#define RCC_BASE 0x40023800
+#define RCC_APB1ENR 0x40
+#define RCC_AHB1ENR 0x30
+#define RCC_APB2ENR 0x44
+
+#define GPIOB_BASE 0x40020400
+#define GPIO_AFRH 0x24
+#define GPIO_AFRL 0x20
+#define GPIO_MODER 0x00
+#define GPIOD_BASE 0x40020C00
+#define GPIO_ODR 0x14
+
+#define TIMER1_BASE 0x40010000
+#define TIM_CR1 0x00
+#define TIM_PSC 0x28
+#define TIM_ARR 0x2C
+#define TIM_DIER 0x0C
+#define TIM_SR 0x10
+
+int16_t x, y, z;
+unsigned int counter = 0;
+
+void I2C1_Init();
+void I2C_Write(uint8_t addr, uint8_t data);
+uint8_t I2C_Read(uint8_t addr);
+void TIMER1_Init();
+void LED_Init();
+void LED_Toggle(uint8_t pin);
+void LED_Blink(uint8_t pin, uint8_t state);
+void LED_Matrix();
+void delay(unsigned int t);
+
+int main() {
+	LED_Init();
+	I2C1_Init();
+	TIMER1_Init();
+	uint8_t device = I2C_Read(0x0F);
+	uint8_t CTRL_REG1A = 0b01010111;
+	I2C_Write(0x20, CTRL_REG1A);
+	while (1) {
+		uint8_t HIGH, LOW;
+		HIGH = I2C_Read(0x29);
+		LOW = I2C_Read(0x28);
+		x = (HIGH << 8) | LOW;
+
+		HIGH = I2C_Read(0x2B);
+		LOW = I2C_Read(0x2A);
+		y = (HIGH << 8) | LOW;
+
+		HIGH = I2C_Read(0x2D);
+		LOW = I2C_Read(0x2C);
+		z = (HIGH << 8) | LOW;
+
+		LED_Matrix();
+	}
+	return 0;
+}
+
+void I2C1_Init() {
+	uint32_t* GPIOB_EN = (uint32_t*)(RCC_BASE + RCC_AHB1ENR);
+	*GPIOB_EN |= (0b01 << 1);
+	uint32_t* I2C1_EN = (uint32_t*)(RCC_BASE + RCC_APB1ENR);
+	*I2C1_EN |= (0b01 << 21);
+
+	uint32_t* GPIOB_MODER = (uint32_t*)(GPIOB_BASE + GPIO_MODER);
+	*GPIOB_MODER &= ~(0b1111 << 16);
+	*GPIOB_MODER |= (0b1010 << 16);
+	uint32_t* GPIOB_AFRH = (uint32_t*)(GPIOB_BASE + GPIO_AFRH);
+	*GPIOB_AFRH &= ~(0xFF << 0);
+	*GPIOB_AFRH |= (0x44 << 0);
+
+//	uint32_t* GPIOB_MODER = (uint32_t*)(GPIOB_BASE + GPIO_MODER);
+//	*GPIOB_MODER &= ~(0b01 << 12);
+//	*GPIOB_MODER &= ~(0b01 << 18);
+//	*GPIOB_MODER |= (0b10 << 12) | (0b10 << 18);
+//	uint32_t* GPIOB_AFRL = (uint32_t*)(GPIOB_BASE + GPIO_AFRL);
+//	*GPIOB_AFRL &= ~(0b1111 << 24);
+//	*GPIOB_AFRL |= (0b0100 << 24);
+//	uint32_t* GPIOB_AFRH = (uint32_t*)(GPIOB_BASE + GPIO_AFRH);
+//	*GPIOB_AFRH &= ~(0b1111 << 4);
+//	*GPIOB_AFRH |= (0b0100 << 4);
+
+	uint32_t* I2C1_CR2 = (uint32_t*)(I2C1_BASE + I2C_CR2);
+	*I2C1_CR2 &= ~(0x3F << 0);
+	*I2C1_CR2 |= (16 << 0);
+	uint32_t* I2C1_CCR = (uint32_t*)(I2C1_BASE + I2C_CCR);
+	*I2C1_CCR &= ~(0xFFF << 0);
+	*I2C1_CCR |= (160 << 0);
+	uint32_t* I2C1_CR1 = (uint32_t*)(I2C1_BASE + I2C_CR1);
+	*I2C1_CR1 |= (0b01 << 0);
+}
+
+void I2C_Write(uint8_t addr, uint8_t data) {
+	uint32_t* I2C1_CR1 = (uint32_t*)(I2C1_BASE + I2C_CR1);
+	*I2C1_CR1 |= (0b01 << 8);								// start
+
+	uint32_t* I2C1_SR1 = (uint32_t*)(I2C1_BASE + I2C_SR1);
+	while(((*I2C1_SR1 >> 0) & 1) == 0);
+	uint32_t* I2C1_DR = (uint32_t*)(I2C1_BASE + I2C_DR);
+	*I2C1_DR = 0b00110010;
+	while(((*I2C1_SR1 >> 1) & 1) == 0);						// wait till matching register's address
+	uint32_t* I2C1_SR2 = (uint32_t*)(I2C1_BASE + I2C_SR2);
+	uint8_t temp = *I2C1_SR2;
+
+	while(((*I2C1_SR1 >> 10) & 1) == 1);
+	*I2C1_DR = addr;
+	while(((*I2C1_SR1 >> 2) & 1) == 0);
+	while(((*I2C1_SR1 >> 10) & 1) == 1);
+	*I2C1_DR = data;
+	while(((*I2C1_SR1 >> 2) & 1) == 0);
+
+	*I2C1_CR1 |= (0b01 << 9);								// stop
+}
+
+uint8_t I2C_Read(uint8_t addr) {
+	uint32_t* I2C1_CR1 = (uint32_t*)(I2C1_BASE + I2C_CR1);
+	*I2C1_CR1 &= ~(0b01 << 10);
+	*I2C1_CR1 |= (0b01 << 8);
+
+	uint32_t* I2C1_SR1 = (uint32_t*)(I2C1_BASE + I2C_SR1);
+	while(((*I2C1_SR1 >> 0) & 1) == 0);
+	uint32_t* I2C1_DR = (uint32_t*)(I2C1_BASE + I2C_DR);
+	*I2C1_DR = 0b00110010;
+	while(((*I2C1_SR1 >> 1) & 1) == 0);
+	uint32_t* I2C1_SR2 = (uint32_t*)(I2C1_BASE + I2C_SR2);
+	uint8_t temp = *I2C1_SR2;
+
+	while(((*I2C1_SR1 >> 10) & 1) == 1);
+	*I2C1_DR = addr;
+	while(((*I2C1_SR1 >> 2) & 1) == 0);
+	while(((*I2C1_SR1 >> 10) & 1) == 1);
+
+	*I2C1_CR1 |= (0b01 << 8);
+	while(((*I2C1_SR1 >> 0) & 1) == 0);
+	*I2C1_DR = 0b00110011;
+	while(((*I2C1_SR1 >> 1) & 1) == 0);
+	temp = *I2C1_SR2;
+	while(((*I2C1_SR1 >> 10) & 1) == 1);
+
+	while(((*I2C1_SR1 >> 6) & 1) == 0);						// Read data
+	uint8_t data = *I2C1_DR;
+
+	*I2C1_CR1 |= (0b01 << 9);
+	return data;
+}
+
+void LED_Init() {
+	uint32_t* GPIOD_EN = (uint32_t*)(RCC_BASE + RCC_AHB1ENR);
+	*GPIOD_EN |= (0b01 << 3);
+	uint32_t* GPIOD_MODER = (uint32_t*)(GPIOD_BASE + GPIO_MODER);
+	*GPIOD_MODER &= ~(0xFF << 24);
+	*GPIOD_MODER |= (0x55 << 24);
+}
+
+void LED_Toggle(uint8_t pin) {
+	uint32_t* GPIOD_ODR = (uint32_t*)(GPIOD_BASE + GPIO_ODR);
+	*GPIOD_ODR ^= (0b01 << pin);
+}
+
+void LED_Blink(uint8_t pin, uint8_t state) {
+	uint32_t* GPIOD_ODR = (uint32_t*)(GPIOD_BASE + GPIO_ODR);
+	if (state == 1) {
+		*GPIOD_ODR |= (0b01 << pin);
+	} else {
+		*GPIOD_ODR &= ~(0b01 << pin);
+	}
+}
+
+void LED_Matrix() {
+	if (x >= 3000) {
+		LED_Blink(13, 0);
+	} else if (x <= -3000) {
+		LED_Blink(15, 0);
+	}
+
+	if (x >= 5000) {
+		LED_Toggle(15);
+		delay(50);
+	} else if (x <= -5000) {
+		LED_Toggle(13);
+		delay(50);
+	}
+
+	if (y >= 3000) {
+		LED_Blink(14, 0);
+	} else if (y <= -3000) {
+		LED_Blink(12, 0);
+	}
+
+	if (y >= 5000) {
+		LED_Toggle(12);
+		delay(50);
+	} else if (y <= -5000) {
+		LED_Toggle(14);
+		delay(50);
+	}
+}
+
+void TIMER1_Init() {
+	uint32_t* TIMER1_EN = (uint32_t*)(RCC_BASE + RCC_APB2ENR);
+	*TIMER1_EN |= (0b01 << 0);
+	uint16_t* TIMER1_CR1 = (uint16_t*)(TIMER1_BASE + TIM_CR1);
+	*TIMER1_CR1 |= (0b01 << 0);
+	uint16_t* TIMER1_PSC = (uint16_t*)(TIMER1_BASE + TIM_PSC);
+	*TIMER1_PSC = 16000 - 1;
+	uint16_t* TIMER1_ARR = (uint16_t*)(TIMER1_BASE + TIM_ARR);
+	*TIMER1_ARR = 1;
+	uint16_t* TIMER1_DIER = (uint16_t*)(TIMER1_BASE + TIM_DIER);
+	*TIMER1_DIER |= (0b01 << 0);
+	uint32_t* NVIC_ISER0 = (uint32_t*)0xE000E100;
+	*NVIC_ISER0 |= (0b01 << 25);
+}
+
+void TIM1_UP_TIM10_IRQHandler() {
+	counter++;
+	uint16_t* TIMER1_SR = (uint16_t*)(TIMER1_BASE + TIM_SR);
+	*TIMER1_SR &= ~(0b01 << 0);
+}
+
+void delay(unsigned int t) {
+	counter = 0;
+	while (t >= counter);
+}

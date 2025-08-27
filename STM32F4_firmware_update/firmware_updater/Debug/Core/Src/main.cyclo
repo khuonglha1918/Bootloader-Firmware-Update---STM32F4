@@ -1,0 +1,13 @@
+../Core/Src/main.c:167:43:FLASH_Erase	4
+../Core/Src/main.c:182:43:FLASH_Write	4
+../Core/Src/main.c:198:43:update	2
+../Core/Src/main.c:54:5:main	2
+../Core/Src/main.c:67:6:TIMER1_Init	1
+../Core/Src/main.c:82:6:TIM1_UP_TIM10_IRQHandler	1
+../Core/Src/main.c:88:6:delay	2
+../Core/Src/main.c:93:6:DMA2_Init	1
+../Core/Src/main.c:108:6:DMA2_Stream2_IRQHandler	1
+../Core/Src/main.c:114:6:UART1_Init	1
+../Core/Src/main.c:144:6:UART_Write	3
+../Core/Src/main.c:152:6:UART_Write_String	2
+../Core/Src/main.c:159:6:UART_Read	2

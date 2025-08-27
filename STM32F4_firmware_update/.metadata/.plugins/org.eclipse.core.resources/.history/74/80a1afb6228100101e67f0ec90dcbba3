@@ -1,0 +1,84 @@
+#include "main.h"
+
+#define GPIOD_BASE 0x40020C00
+#define GPIO_MODER 0x00
+#define GPIO_ODR 0x14
+
+#define TIMER1_BASE 0x40010000
+#define TIM_CR1 0x00
+#define TIM_PSC 0x28
+#define TIM_ARR 0x2C
+#define TIM_DIER 0x0C
+#define TIM_SR 0x10
+
+#define RCC_BASE 0x40023800
+#define RCC_APB2ENR 0x44
+#define RCC_AHB1ENR 0x30
+
+unsigned int counter = 0;
+
+void LED_Init();
+void LED_Toggle(uint8_t pin);
+void TIMER1_Init();
+
+int main() {
+	LED_Init();
+	TIMER1_Init();
+	unsigned int led1 = 0;
+	unsigned int led2 = 0;
+	unsigned int led3 = 0;
+	unsigned int led4 = 0;
+	while (1) {
+		if (counter - led1 >= 200) {
+			LED_Toggle(12);
+			led1 = counter;
+		}
+		if (counter - led2 >= 500) {
+			LED_Toggle(13);
+			led2 = counter;
+		}
+		if (counter - led3 >= 800) {
+			LED_Toggle(14);
+			led3 = counter;
+		}
+		if (counter - led4 >= 1100) {
+			LED_Toggle(15);
+			led4 = counter;
+		}
+	}
+	return 0;
+}
+
+void LED_Init() {
+	uint32_t* GPIOD_EN = (uint32_t*)(RCC_BASE + RCC_AHB1ENR);
+	*GPIOD_EN |= (0b01 << 3);
+	uint32_t* GPIOD_MODER = (uint32_t*)(GPIOD_BASE + GPIO_MODER);
+	*GPIOD_MODER &= ~(0xFF << 24);
+	*GPIOD_MODER |= (0x55 << 24);
+}
+
+void LED_Toggle(uint8_t pin) {
+	uint32_t* GPIOD_ODR = (uint32_t*)(GPIOD_BASE + GPIO_ODR);
+	*GPIOD_ODR ^= (0b01 << pin);
+}
+
+void TIMER1_Init() {
+	uint32_t* TIMER1_EN = (uint32_t*)(RCC_BASE + RCC_APB2ENR);
+	*TIMER1_EN |= (0b01 << 0);
+	uint16_t* TIMER1_CR1 = (uint16_t*)(TIMER1_BASE + TIM_CR1);
+	*TIMER1_CR1 |= (0b01 << 0);
+	uint16_t* TIMER1_PSC = (uint16_t*)(TIMER1_BASE + TIM_PSC);
+	*TIMER1_PSC = 16000 - 1;
+	uint16_t* TIMER1_ARR = (uint16_t*)(TIMER1_BASE + TIM_ARR);
+	*TIMER1_ARR = 1;
+	uint16_t* TIMER1_DIER = (uint16_t*)(TIMER1_BASE + TIM_DIER);
+	*TIMER1_DIER |= (0b01 << 0);
+	uint32_t* NVIC_ISER0 = (uint32_t*)0xE000E100;
+	*NVIC_ISER0 |= (0b01 << 25);
+}
+
+void TIM1_UP_TIM10_IRQHandler() {
+	counter++;
+	uint16_t* TIMER1_SR = (uint16_t*)(TIMER1_BASE + TIM_SR);
+	*TIMER1_SR &= ~(0b01 << 0);
+}

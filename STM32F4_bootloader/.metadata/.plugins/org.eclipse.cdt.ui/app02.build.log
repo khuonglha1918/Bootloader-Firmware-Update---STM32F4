@@ -1,0 +1,19 @@
+18:19:12 **** Incremental Build of configuration Debug for project app02 ****
+make -j20 all 
+arm-none-eabi-gcc -o "app02.elf" @"objects.list"   -mcpu=cortex-m4 -T"D:\IMIC_IoT\Embedded_C\EOC_Project\app02\STM32F411VETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="app02.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -Wl,--end-group
+Finished building target: app02.elf
+ 
+arm-none-eabi-size  app02.elf 
+arm-none-eabi-objdump -h -S app02.elf  > "app02.list"
+arm-none-eabi-objcopy  -O binary app02.elf  "app02.bin"
+   text	   data	    bss	    dec	    hex	filename
+  35136	    468	   2060	  37664	   9320	app02.elf
+Finished building: default.size.stdout
+ 
+Finished building: app02.bin
+ 
+Finished building: app02.list
+ 
+
+18:19:12 Build Finished. 0 errors, 0 warnings. (took 447ms)
+

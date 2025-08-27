@@ -1,0 +1,10 @@
+LaunchTargetManager/org.eclipse.launchbar.core.launchTargetType.local,Local/arch=x86_64
+LaunchTargetManager/org.eclipse.launchbar.core.launchTargetType.local,Local/name=Local
+LaunchTargetManager/org.eclipse.launchbar.core.launchTargetType.local,Local/os=win32
+configDescList=org.eclipse.cdt.dsf.gdb.gdbRemotedescriptorType\:app02_ADC_UART Debug,org.eclipse.cdt.dsf.gdb.gdbRemotedescriptorType\:app01_simultaneous_LEDs Debug,org.eclipse.cdt.dsf.gdb.gdbRemotedescriptorType\:firmware_updater Debug,org.eclipse.cdt.dsf.gdb.gdbRemotedescriptorType\:app03_Gyroscope Debug,org.eclipse.cdt.dsf.gdb.gdbRemotedescriptorType\:app04_MotionAlarm Debug
+eclipse.preferences.version=1
+org.eclipse.cdt.dsf.gdb.gdbRemotedescriptorType\:Assignment03_Exercise02\ Debug/activeLaunchMode=run
+org.eclipse.cdt.dsf.gdb.gdbRemotedescriptorType\:Assignment03_Exercise02\ Debug/activeLaunchTarget=null\:---
+org.eclipse.cdt.dsf.gdb.gdbRemotedescriptorType\:app01_simultaneous_LEDs\ Debug/activeLaunchMode=run
+org.eclipse.cdt.dsf.gdb.gdbRemotedescriptorType\:app01_simultaneous_LEDs\ Debug/activeLaunchTarget=null\:---
+org.eclipse.cdt.dsf.gdb.gdbRemotedescriptorType\:firmware_updater\ Debug/activeLaunchMode=run

@@ -1,0 +1,168 @@
+#include "main.h"
+#include <string.h>
+#include <stdio.h>
+#include <stdarg.h>
+
+#define TIMER1_BASE 0x40010000
+#define TIM_PSC 0x28
+#define TIM_ARR 0x2C
+#define TIM_SR 0x10
+#define TIM_DIER 0x0C
+#define TIM_CR1 0x00
+
+#define ADC1_BASE 0x40012000
+#define ADC_CR2 0x08
+#define ADC_SMPR1 0x0C
+#define ADC_CCR 0x304
+#define ADC_JSQR 0x38
+#define ADC_SR 0x00
+#define ADC_JDR1 0x3C
+
+#define RCC_BASE 0x40023800
+#define RCC_AHB1ENR 0x30
+#define RCC_APB2ENR 0x44
+
+#define UART1_BASE 0x40011000
+#define UART_BRR 0x08
+#define UART_CR1 0x0C
+#define UART_SR 0x00
+#define UART_DR 0x04
+
+#define GPIOB_BASE 0x40020400
+#define GPIO_AFRL 0x20
+#define GPIO_MODER 0x00
+
+unsigned int counter = 0;
+
+void ADC_Init();
+float ADC_Measure();
+float temp_measure();
+void TIMER1_Init();
+void UART1_Init();
+void UART_Write(uint8_t data);
+char UART_Read();
+void delay(unsigned int t);
+
+int main() {
+	ADC_Init();
+	TIMER1_Init();
+	UART1_Init();
+	while (1) {
+		float temp = temp_measure();
+		int idx = 1;
+		UART_Write_String("Room temperature is: %d\n", idx);
+		delay(1);
+		idx++;
+	}
+
+	return 0;
+}
+
+void ADC_Init() {
+	uint32_t* ADC_EN = (uint32_t*)(RCC_BASE + RCC_APB2ENR);
+	*ADC_EN |= (0b01 << 8);
+	uint32_t* ADC1_SMPR1 = (uint32_t*)(ADC1_BASE + ADC_SMPR1);
+	*ADC1_SMPR1 &= ~(0b111 << 18);
+	*ADC1_SMPR1 |= (0b111 << 18);
+	uint32_t* ADC1_JSQR = (uint32_t*)(ADC1_BASE + ADC_JSQR);
+	*ADC1_JSQR &= ~(0x1F << 15);
+	*ADC1_JSQR |= (16 << 15);
+	*ADC1_JSQR &= ~(0b11 << 20);
+	uint32_t* ADC1_CCR = (uint32_t*)(ADC1_BASE + ADC_CCR);
+	*ADC1_CCR |= (0b01 << 23);
+	uint32_t* ADC1_CR2 = (uint32_t*)(ADC1_BASE + ADC_CR2);
+	*ADC1_CR2 |= (0b01 << 0);
+}
+
+float ADC_Measure() {
+	uint32_t* ADC1_CR2 = (uint32_t*)(ADC1_BASE + ADC_CR2);
+	*ADC1_CR2 |= (0b01 << 22);
+	uint32_t* ADC1_SR = (uint32_t*)(ADC1_BASE + ADC_SR);
+	while (((*ADC1_SR >> 2) & 1) == 0);
+	*ADC1_SR &= ~(0b01 << 2);
+	uint32_t* ADC1_JDR1 = (uint32_t*)(ADC1_BASE + ADC_JDR1);
+	return *ADC1_JDR1 / 4095 * 3;
+}
+
+float temp_measure() {
+	float vsense = ADC_Measure();
+	float v25 = 0.76;
+	float avg_slope = 2.5/1000;
+	float recorded_temp = ((vsense - v25)/avg_slope) + 25;
+	return recorded_temp;
+}
+
+void UART1_Init() {
+	uint32_t* GPIOB_EN = (uint32_t*)(RCC_BASE + RCC_AHB1ENR);
+	*GPIOB_EN |= (0b01 << 1);
+	uint32_t* UART1_EN = (uint32_t*)(RCC_BASE + RCC_APB2ENR);
+	*UART1_EN |= (0b01 << 4);
+
+	uint32_t* GPIOB_MODER = (uint32_t*)(GPIOB_BASE + GPIO_MODER);
+	*GPIOB_MODER &= ~(0x0F << 12);
+	*GPIOB_MODER |= (0x0A << 12);
+	uint32_t* GPIOB_AFRL = (uint32_t*)(GPIOB_BASE + GPIO_AFRL);
+	*GPIOB_AFRL &= ~(0xFF << 24);
+	*GPIOB_AFRL |= (0x77 << 24);
+
+	uint32_t* UART1_BRR = (uint32_t*)(UART1_BASE + UART_BRR);
+	*UART1_BRR = (104 << 4) | (3 << 0);
+	uint32_t* UART1_CR1 = (uint32_t*)(UART1_BASE + UART_CR1);
+	*UART1_CR1 |= (0b01 << 13) | (0b01 << 12) | (0b01 << 10) | (0b01 << 5) | (0b01 << 3) | (0b01 << 2);
+	uint32_t* NVIC_ISER1 = (uint32_t*)0xE000E104;
+	*NVIC_ISER1 |= (0b01 << 5);
+}
+
+void UART_Write(uint8_t data) {
+	uint32_t* UART1_DR = (uint32_t*)(UART1_BASE + UART_DR);
+	uint32_t* UART1_SR = (uint32_t*)(UART1_BASE + UART_SR);
+	while (((*UART1_SR >> 6) & 1) == 0);
+	*UART1_DR = data;
+	while (((*UART1_SR >> 7) & 1) == 0);
+}
+
+char UART_Read() {
+	uint32_t* UART1_DR = (uint32_t*)(UART1_BASE + UART_DR);
+	uint32_t* UART1_SR = (uint32_t*)(UART1_BASE + UART_SR);
+	while (((*UART1_SR >> 5) & 1) == 0);
+	char data = *UART1_DR;
+	return data;
+}
+
+void UART_Write_String(char* s, ...) {
+	va_list arg;
+	va_start(arg, s);
+	char rxbuff[128] = {0};
+	vsprintf(rxbuff, s, arg);
+	va_end(arg);
+	unsigned int l = strlen(rxbuff);
+	for (int i = 0; i < l; i++) {
+		UART_Write(rxbuff[i]);
+	}
+}
+
+void TIMER1_Init() {
+	uint32_t* TIMER1_EN = (uint32_t*)(RCC_BASE + RCC_APB2ENR);
+	*TIMER1_EN |= (0b01 << 0);
+	uint16_t* TIMER1_PSC = (uint16_t*)(TIMER1_BASE + TIM_PSC);
+	*TIMER1_PSC = 16000 - 1;
+	uint16_t* TIMER1_ARR = (uint16_t*)(TIMER1_BASE + TIM_ARR);
+	*TIMER1_ARR = 1000;
+	uint16_t* TIMER1_DIER = (uint16_t*)(TIMER1_BASE + TIM_DIER);
+	*TIMER1_DIER |= (0b01 << 0);
+	uint16_t* TIMER1_CR1 = (uint16_t*)(TIMER1_BASE + TIM_CR1);
+	*TIMER1_CR1 |= (0b01 << 0);
+	uint32_t* NVIC_ISER0 = (uint32_t*)0xE000E100;
+	*NVIC_ISER0 |= (0b01 << 25);
+}
+
+void TIM1_UP_TIM10_IRQHandler() {
+	counter++;
+	uint16_t* TIMER1_SR = (uint16_t*)(TIMER1_BASE + TIM_SR);
+	*TIMER1_SR &= ~(0b01 << 0);
+}
+
+void delay(unsigned int t) {
+	counter = 0;
+	while (t >= counter);
+}

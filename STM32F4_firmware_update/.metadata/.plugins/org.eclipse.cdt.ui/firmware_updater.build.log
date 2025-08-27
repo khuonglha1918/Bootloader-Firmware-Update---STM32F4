@@ -1,0 +1,71 @@
+01:18:22 **** Incremental Build of configuration Debug for project firmware_updater ****
+make -j20 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F411xE -c -I../Core/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+../Core/Src/main.c:4: warning: "DMA2_BASE" redefined
+    4 | #define DMA2_BASE 0x40026400
+      | 
+In file included from ../Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f4xx.h:154,
+                 from ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_def.h:29,
+                 from ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rcc.h:27,
+                 from ../Core/Inc/stm32f4xx_hal_conf.h:275,
+                 from ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:29,
+                 from ../Core/Inc/main.h:30,
+                 from ../Core/Src/main.c:1:
+../Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f411xe.h:711: note: this is the location of the previous definition
+  711 | #define DMA2_BASE             (AHB1PERIPH_BASE + 0x6400UL)
+      | 
+../Core/Src/main.c:18: warning: "GPIOB_BASE" redefined
+   18 | #define GPIOB_BASE 0x40020400
+      | 
+../Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f411xe.h:694: note: this is the location of the previous definition
+  694 | #define GPIOB_BASE            (AHB1PERIPH_BASE + 0x0400UL)
+      | 
+../Core/Src/main.c:21: warning: "GPIOD_BASE" redefined
+   21 | #define GPIOD_BASE 0x40020C00
+      | 
+../Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f411xe.h:696: note: this is the location of the previous definition
+  696 | #define GPIOD_BASE            (AHB1PERIPH_BASE + 0x0C00UL)
+      | 
+../Core/Src/main.c:24: warning: "RCC_BASE" redefined
+   24 | #define RCC_BASE 0x40023800
+      | 
+../Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f411xe.h:700: note: this is the location of the previous definition
+  700 | #define RCC_BASE              (AHB1PERIPH_BASE + 0x3800UL)
+      | 
+../Core/Src/main.c:28: warning: "FLASH_BASE" redefined
+   28 | #define FLASH_BASE 0x40023C00
+      | 
+../Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f411xe.h:636: note: this is the location of the previous definition
+  636 | #define FLASH_BASE            0x08000000UL /*!< FLASH(up to 1 MB) base address in the alias region                         */
+      | 
+../Core/Src/main.c: In function 'DMA2_Init':
+../Core/Src/main.c:97:21: warning: assignment to 'uint32_t' {aka 'long unsigned int'} from 'char *' makes integer from pointer without a cast [-Wint-conversion]
+   97 |         *DMA2_SM0AR = rxbuff;
+      |                     ^
+../Core/Src/main.c: In function 'update':
+../Core/Src/main.c:201:40: warning: passing argument 1 of 'FLASH_Write' makes pointer from integer without a cast [-Wint-conversion]
+  201 |                 FLASH_Write(0x08000000 + i, rxbuff[i]);
+      |                             ~~~~~~~~~~~^~~
+      |                                        |
+      |                                        int
+../Core/Src/main.c:182:64: note: expected 'uint8_t *' {aka 'unsigned char *'} but argument is of type 'int'
+  182 | __attribute__((section(".RamFunc"))) void FLASH_Write(uint8_t* addr, uint8_t data) {
+      |                                                       ~~~~~~~~~^~~~
+arm-none-eabi-gcc -o "firmware_updater.elf" @"objects.list"   -mcpu=cortex-m4 -T"D:\Personal_projects\STM32F4_firmware_update\firmware_updater\STM32F411VETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="firmware_updater.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+D:/STM32cubeIDE/STM32CubeIDE_1.18.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.0.202411081344/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: warning: firmware_updater.elf has a LOAD segment with RWX permissions
+Finished building target: firmware_updater.elf
+ 
+arm-none-eabi-size  firmware_updater.elf 
+arm-none-eabi-objdump -h -S firmware_updater.elf  > "firmware_updater.list"
+arm-none-eabi-objcopy  -O binary firmware_updater.elf  "firmware_updater.bin"
+   text	   data	    bss	    dec	    hex	filename
+   1812	      0	  19860	  21672	   54a8	firmware_updater.elf
+Finished building: default.size.stdout
+ 
+Finished building: firmware_updater.bin
+Finished building: firmware_updater.list
+ 
+ 
+
+01:18:23 Build Finished. 0 errors, 8 warnings. (took 380ms)
+

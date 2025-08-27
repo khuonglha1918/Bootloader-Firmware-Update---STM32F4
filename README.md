@@ -1,6 +1,7 @@
 ## Bootloader & Firmware Update - STM32F4
 
 - Various firmwares can be bootloaded onto one single STM32F4 board, performing different kinds of task
+- Gyroscope & Quake Sensor apps will need to be uploaded directly onto board to use (not via bootloading methods)
 
 
 ## Features

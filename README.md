@@ -1,7 +1,6 @@
 ## Bootloader & Firmware Update - STM32F4
 
 - Various firmwares can be bootloaded onto one single STM32F4 board, performing different kinds of task
-- Gyroscope & Quake Sensor apps will need to be uploaded directly onto board to use (not via bootloading methods)
 
 
 ## Features
@@ -13,6 +12,8 @@
 - Room temperature values reading & reporting using ADC and transmitting via UART
 - Gyroscope Sensor that reports which side board is tilted to physically
 - Quake Sensor that alerts when board detects high vibration signals
+
+Note: Gyroscope & Quake Sensor apps will need to be uploaded directly onto board to use (not via bootloading methods)
 
 
 ## Hardware Requirements
